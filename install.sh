@@ -32,6 +32,8 @@ git clone https://github.com/digininja/CeWL.git
 cd CeWL
 sudo gem install bundler
 bundle install
+sudo gem install nokogiri
+chmod u+x ./cewl.rb
 sudo apt install cewl
 
 
