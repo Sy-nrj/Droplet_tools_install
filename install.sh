@@ -22,7 +22,7 @@ go install github.com/lc/subjs@latest
 go install github.com/tomnomnom/anew@latest
 go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
 go install github.com/rverton/webanalyze/cmd/webanalyze@latest
-
+go install github.com/BishopFox/jsluice/cmd/jsluice@latest
 
 
 sudo apt install cewl
