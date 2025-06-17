@@ -1,0 +1,98 @@
+#!/bin/bash
+
+# Usage:
+# bash C_Resolve_Subdomains.sh [target_list.txt | single_domain | output/subdomains/]
+
+set -euo pipefail
+
+INPUT=${1:-"default"}
+BASE_DIR="output/subdomains"
+RESOLVERS="resolvers.txt"
+
+# Download a list of good resolvers
+echo "[*] Downloading resolver list..."
+curl -s https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -o "$RESOLVERS"
+
+# Function to resolve and scan a domain
+resolve_and_scan() {
+    local domain=$1
+    local subs_file="$BASE_DIR/$domain/subdomains/all_subs.txt"
+    local resolved_dir="$BASE_DIR/$domain/resolved"
+    local open_ports_dir="$BASE_DIR/$domain/open_ports"
+
+    if [ ! -f "$subs_file" ]; then
+        echo "[-] Skipping $domain — missing: $subs_file"
+        return
+    fi
+
+    echo "[*] Processing $domain"
+    mkdir -p "$resolved_dir" "$open_ports_dir"
+
+    # 1. DNS Resolution
+    echo "[*] Resolving subdomains..."
+    dnsx -l "$subs_file" -silent -resolvers "$RESOLVERS" -o "$resolved_dir/dnsx_resolved.txt"
+    puredns resolve "$subs_file" --resolvers "$RESOLVERS" --write "$resolved_dir/puredns_resolved.txt" --quiet
+    massdns -r "$RESOLVERS" -t A -o S -w "$resolved_dir/massdns.txt" "$subs_file"
+
+    # 2. Aggregate unique resolved domains
+    {
+        cat "$resolved_dir/dnsx_resolved.txt"
+        cat "$resolved_dir/puredns_resolved.txt"
+        cut -d ' ' -f1 "$resolved_dir/massdns.txt"
+    } | sort -u > "$resolved_dir/resolved.txt"
+
+    # 3. Extract unique IPs
+    cut -d ' ' -f3 "$resolved_dir/massdns.txt" | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' \
+        | sort -u > "$open_ports_dir/ips.txt"
+
+    # 4. Masscan IPs if available
+    if [ -s "$open_ports_dir/ips.txt" ]; then
+        echo "[*] Running port scan on resolved IPs..."
+        masscan -p1-65535 -iL "$open_ports_dir/ips.txt" --rate=1000 -oG "$open_ports_dir/masscan.grep"
+
+        # 5. Parse masscan result
+        awk '
+            /^Host: / {
+                split($2, ip, " ")
+                split($4, port, "/")
+                print ip[1] ":" port[1]
+            }
+        ' "$open_ports_dir/masscan.grep" | sort -u > "$open_ports_dir/open_ports.txt"
+
+        echo "[✓] Open ports saved to $open_ports_dir/open_ports.txt"
+    else
+        echo "[!] No IPs found for $domain, skipping masscan."
+    fi
+
+    echo "[✓] Done with $domain"
+}
+
+# Determine domains to process
+DOMAINS=()
+
+if [ "$INPUT" = "default" ]; then
+    echo "[*] No input specified. Scanning all domains in $BASE_DIR..."
+    while IFS= read -r -d '' file; do
+        domain=$(echo "$file" | awk -F '/' '{print $(NF-3)}')
+        DOMAINS+=("$domain")
+    done < <(find "$BASE_DIR" -type f -name all_subs.txt -print0)
+elif [ -d "$INPUT" ]; then
+    echo "[*] Scanning folder: $INPUT"
+    while IFS= read -r -d '' file; do
+        domain=$(echo "$file" | awk -F '/' '{print $(NF-3)}')
+        DOMAINS+=("$domain")
+    done < <(find "$INPUT" -type f -name all_subs.txt -print0)
+elif [ -f "$INPUT" ]; then
+    echo "[*] Reading domain list from: $INPUT"
+    mapfile -t DOMAINS < "$INPUT"
+else
+    echo "[*] Single domain input detected: $INPUT"
+    DOMAINS=("$INPUT")
+fi
+
+# Process each domain
+for domain in "${DOMAINS[@]}"; do
+    resolve_and_scan "$domain"
+done
+
+echo "[✓] All processing complete."
