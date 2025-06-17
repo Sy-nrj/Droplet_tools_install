@@ -29,7 +29,9 @@ go install github.com/Nemesis0U/JSRecon@latest
 # Installing Cewl
 sudo apt install ruby ruby-dev build-essential libcurl4-openssl-dev -y
 git clone https://github.com/digininja/CeWL.git
-cd CeWL && cd CeWL
+cd CeWL
+sudo gem install bundler
+bundle install
 sudo apt install cewl
 
 
