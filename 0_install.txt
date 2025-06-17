@@ -30,24 +30,27 @@ go install github.com/rverton/webanalyze/cmd/webanalyze@latest
 sudo apt install cewl
 
 
-sudo snap install seclists
-sudo apt install sublist3r
-sudo snap install amass
+sudo snap install seclists -y
+sudo apt install sublist3r -y
+sudo snap install amass -y
 
 
 # Waymore
 pipx install git+https://github.com/xnl-h4ck3r/waymore.git
 
 # xnlinkFinder
+
 pipx install git+https://github.com/xnl-h4ck3r/xnLinkFinder.git
 
 
 #  Masscan
+
 sudo apt-get --assume-yes install git make gcc
 git clone https://github.com/robertdavidgraham/masscan
 cd masscan && make && cd ..
 
 # Webanalyze
+
 git clone https://github.com/janwojdyla/webanalyze.git
 cd webanalyze && go build && sudo cp webanalyze /usr/bin && cd ..
 
