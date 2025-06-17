@@ -1,32 +1,53 @@
 #!/bin/bash
 
-INPUT="input/targets.txt"
+# Usage:
+# bash C_Subdomain_enumeration.sh example.com
+# bash C_Subdomain_enumeration.sh input/targets.txt
+
+set -e
+
 OUTPUT_DIR="output/subdomains"
-TMP="output/tmp"
-mkdir -p "$OUTPUT_DIR" "$TMP" 
+TMP_DIR="output/tmp"
 
-check_input() {
-    if [ ! -f "$INPUT" ]; then
-        echo "[-] $INPUT not found. Create it with your target(s)."
-        exit 1
-    fi
+mkdir -p "$OUTPUT_DIR" "$TMP_DIR"
+
+# Check if a domain or a file was provided
+INPUT=$1
+if [ -z "$INPUT" ]; then
+    echo "[-] Usage: $0 <domain|file_with_domains>"
+    exit 1
+fi
+
+# Determine if input is a file or a single domain
+if [ -f "$INPUT" ]; then
+    TARGETS=$(cat "$INPUT")
+elif [[ "$INPUT" =~ ^[a-zA-Z0-9.-]+$ ]]; then
+    TARGETS="$INPUT"
+else
+    echo "[-] Invalid input. Provide a domain (e.g., example.com) or a file path."
+    exit 1
+fi
+
+ENUM_SUBDOMAINS() {
+    local domain=$1
+    echo "[*] Enumerating subdomains for: $domain"
+    
+    {
+        subfinder -d "$domain" -silent 2>/dev/null
+        assetfinder --subs-only "$domain" 2>/dev/null
+        amass enum -passive -d "$domain" 2>/dev/null
+        sublist3r -d "$domain" 2>/dev/null
+        gospider -s "http://$domain" -o "$TMP_DIR" 2>/dev/null
+        gau --subs "$domain" 2>/dev/null
+        curl -s "https://crt.sh/?q=%25.$domain&output=json" | jq -r '.[].name_value' 2>/dev/null
+    } | sed 's/^www\.//' | sort -u
 }
 
-run_sub_enum() {
-    while read -r target; do
-        echo "[*] Enumerating subdomains for $target"
-        subfinder -d "$target" -silent
-        assetfinder --subs-only "$target"
-        amass enum -passive -d "$target"
-        sublist3r -d "$target" 
-        gospider -s $target
-        gau --subs $target 
-	curl -s "https://crt.sh/?q=%25.$target&output=json" | jq -r '.[].name_value' 
+ALL_RESULTS="$OUTPUT_DIR/all_subdomains.txt"
+> "$ALL_RESULTS"
 
-    done < "$INPUT"
-}
+for target in $TARGETS; do
+    ENUM_SUBDOMAINS "$target"
+done | sort -u >> "$ALL_RESULTS"
 
-check_input
-
-run_sub_enum | sort -u > "$OUTPUT_DIR/all_subdomains.txt"
-echo "[✓] Subdomain enumeration complete. Saved to $OUTPUT_DIR/all_subdomains.txt"
+echo "[✓] Subdomain enumeration complete. Results saved to: $ALL_RESULTS"
