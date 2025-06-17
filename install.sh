@@ -26,6 +26,10 @@ go install github.com/BishopFox/jsluice/cmd/jsluice@latest
 go install github.com/Nemesis0U/JSRecon@latest
 
 
+# Installing Cewl
+sudo apt install ruby ruby-dev build-essential libcurl4-openssl-dev -y
+git clone https://github.com/digininja/CeWL.git
+cd CeWL && cd CeWL
 sudo apt install cewl
 
 
