@@ -51,7 +51,7 @@ cd masscan && make && cd ..
 
 # Webanalyze
 
-git clone https://github.com/janwojdyla/webanalyze.git
+git clone https://github.com/rverton/webanalyze.git
 cd webanalyze && go build && sudo cp webanalyze /usr/bin && cd ..
 
 
