@@ -59,5 +59,6 @@ cd webanalyze && go build && sudo cp webanalyze /usr/bin && cd ..
 git clone https://github.com/blechschmidt/massdns.git
 cd massdns && make && sudo cp bin/massdns /usr/local/bin/  && cd ..
 
+sudo mkdir -p /usr/bin/go
 
 sudo cp -r ~/go/bin /usr/bin/go
