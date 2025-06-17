@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Usage:
+# bash enum_chatgpt.sh example.com
+# bash enum_chatgpt.sh input/targets.txt
+
+set -e
+
+OUTPUT_DIR="output/subdomains"
+TMP_DIR="output/tmp"
+
+mkdir -p "$OUTPUT_DIR" "$TMP_DIR"
+
+# Check if a domain or a file was provided
+INPUT=$1
+if [ -z "$INPUT" ]; then
+    echo "[-] Usage: $0 <domain|file_with_domains>"
+    exit 1
+fi
+
+# Determine if input is a file or a single domain
+if [ -f "$INPUT" ]; then
+    TARGETS=$(cat "$INPUT")
+elif [[ "$INPUT" =~ ^[a-zA-Z0-9.-]+$ ]]; then
+    TARGETS="$INPUT"
+else
+    echo "[-] Invalid input. Provide a domain (e.g., example.com) or a file path."
+    exit 1
+fi
+
+ENUM_SUBDOMAINS() {
+    local domain=$1
+    local target_dir="$OUTPUT_DIR/$domain/subdomains"
+    mkdir -p "$target_dir"
+
+    echo "[*] Enumerating subdomains for: $domain"
+
+    # Run tools and save outputs
+    subfinder -d "$domain" -silent > "$target_dir/subfinder.txt"
+    assetfinder --subs-only "$domain" > "$target_dir/assetfinder.txt"
+    amass enum -passive -d "$domain" -o "$target_dir/amass.txt"
+    sublist3r -d "$domain" -o "$target_dir/sublist3r.txt"
+    gospider -s "http://$domain" -o "$TMP_DIR" 2>/dev/null
+    gau --subs "$domain" 2>/dev/null > "$target_dir/gau.txt"
+    curl -s "https://crt.sh/?q=%25.$domain&output=json" | jq -r '.[].name_value' > "$target_dir/curl.txt"
+
+    # Aggregate unique subdomains
+    cat "$target_dir"/*.txt | sed 's/^www\.//' | sort -u > "$target_dir/all_subs.txt"
+}
+
+for target in $TARGETS; do
+    ENUM_SUBDOMAINS "$target"
+done
+
+echo "[✓] Subdomain enumeration complete. Results saved to: $OUTPUT_DIR"

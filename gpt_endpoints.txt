@@ -1,0 +1,85 @@
+#!/bin/bash
+
+# Define the base output directory
+OUTPUT_DIR="output_dir/subdomains"
+
+# List of domains to process (from previous resolution step)
+DOMAINS=$(find "$OUTPUT_DIR" -mindepth 2 -maxdepth 2 -type f -name "resolved.txt" -exec dirname {} \; | sed 's|/resolved.txt||')
+
+# Tools for endpoint discovery
+ENDPOINT_TOOLS=("gospider" "gau" "waymore" "katana" "waybackurls")
+
+# Tools for asset enumeration
+JS_TOOLS=("xnlinkfinder" "jsluice" "jsrecon")
+JSON_FILES=("config.json" "firebase.json" "site.manifest" ".env")
+BACKUP_EXTENSIONS=("bak" "bck" "old" "backup")
+
+# Iterate over each domain
+for DOMAIN_DIR in $DOMAINS; do
+  DOMAIN=$(basename "$DOMAIN_DIR")
+  echo "[*] Processing domain: $DOMAIN"
+
+  # Create necessary directories
+  mkdir -p "$DOMAIN_DIR/assets/endpoints"
+  mkdir -p "$DOMAIN_DIR/assets/js_files"
+  mkdir -p "$DOMAIN_DIR/assets/json_files"
+  mkdir -p "$DOMAIN_DIR/assets/backups"
+  mkdir -p "$DOMAIN_DIR/assets/more"
+
+  # Perform endpoint discovery using each tool
+  for TOOL in "${ENDPOINT_TOOLS[@]}"; do
+    case $TOOL in
+      "gospider")
+        gospider -s "http://$DOMAIN" -o "$DOMAIN_DIR/assets/endpoints/gospider.txt"
+        ;;
+      "gau")
+        gau -subs "$DOMAIN" > "$DOMAIN_DIR/assets/endpoints/gau.txt"
+        ;;
+      "waymore")
+        waymore -d "$DOMAIN" > "$DOMAIN_DIR/assets/endpoints/waymore.txt"
+        ;;
+      "katana")
+        katana -d "$DOMAIN" > "$DOMAIN_DIR/assets/endpoints/katana.txt"
+        ;;
+      "waybackurls")
+        waybackurls "$DOMAIN" > "$DOMAIN_DIR/assets/endpoints/waybackurls.txt"
+        ;;
+      *)
+        echo "Unknown tool: $TOOL"
+        ;;
+    esac
+  done
+
+  # Enumerate JavaScript files
+  for JS_TOOL in "${JS_TOOLS[@]}"; do
+    case $JS_TOOL in
+      "xnlinkfinder")
+        xnlinkfinder "$DOMAIN" > "$DOMAIN_DIR/assets/js_files/xn_link_finder.txt"
+        ;;
+      "jsluice")
+        jsluice -u "$DOMAIN" > "$DOMAIN_DIR/assets/js_files/jsluice.txt"
+        ;;
+      "jsrecon")
+        jsrecon -u "$DOMAIN" > "$DOMAIN_DIR/assets/js_files/jsrecon.txt"
+        ;;
+      *)
+        echo "Unknown JS tool: $JS_TOOL"
+        ;;
+    esac
+  done
+
+  # Search for JSON configuration files
+  for JSON_FILE in "${JSON_FILES[@]}"; do
+    curl -s "http://$DOMAIN/$JSON_FILE" -o "$DOMAIN_DIR/assets/json_files/$JSON_FILE"
+  done
+
+  # Search for backup files
+  for EXT in "${BACKUP_EXTENSIONS[@]}"; do
+    curl -s "http://$DOMAIN/file.$EXT" -o "$DOMAIN_DIR/assets/backups/file.$EXT"
+  done
+
+  # Search for other potentially sensitive files
+  curl -s "http://$DOMAIN/site.manifest" -o "$DOMAIN_DIR/assets/more/site.manifest"
+  curl -s "http://$DOMAIN/.env" -o "$DOMAIN_DIR/assets/more/.env"
+  curl -s "http://$DOMAIN/.git/" -o "$DOMAIN_DIR/assets/more/.git/"
+done
