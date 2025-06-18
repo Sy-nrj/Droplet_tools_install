@@ -79,6 +79,12 @@ if [ $# -eq 0 ]; then
         folder=$(basename "$d")
         resolve_domain "$BASE_PATH" "$folder"
         scan_open_ports "$BASE_PATH" "$folder"
+
+        echo "\r\n"
+        echo "----------------"
+        echo $folder
+        echo "\r\n"
+        echo "----------------"
     done
 else
     for domain in "$@"; do
