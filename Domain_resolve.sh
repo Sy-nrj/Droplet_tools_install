@@ -1,24 +1,19 @@
 #!/bin/bash
-# Usage:
-# bash domain_resolve.sh [optional: single_domain | domain_list.txt | output/folder/]
 
 set -euo pipefail
 
-# Get fresh resolvers
-echo "[*] Downloading best DNS resolvers..."
-curl -s https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -o resolvers.txt
-
-INPUT=${1:-"default"}
+# Constants
 RESOLVERS="resolvers.txt"
 BASE_PATH="output"
+OUTPUT_DIR="resolved"
+RESOLVED_FILE="resolved.txt"
 
-# ---------------------- FUNCTIONS -----------------------
-
+# Functions
 resolve_domain() {
     local base_path="$1"
     local domain="$2"
     local subs_file="$base_path/$domain/subdomains/all_subs.txt"
-    local resolved_dir="$base_path/$domain/resolved"
+    local resolved_dir="$base_path/$domain/$OUTPUT_DIR"
 
     if [ ! -f "$subs_file" ]; then
         echo "[!] Skipping $domain: Missing $subs_file"
@@ -42,7 +37,7 @@ resolve_domain() {
         cat "$resolved_dir/dnsx_resolved.txt" 2>/dev/null
         cat "$resolved_dir/puredns_resolved.txt" 2>/dev/null
         cut -d ' ' -f1 "$resolved_dir/massdns.txt" 2>/dev/null
-    } | sort -u > "$resolved_dir/resolved.txt"
+    } | sort -u > "$resolved_dir/$RESOLVED_FILE"
 
     echo "[✓] Resolution complete for $domain"
 }
@@ -50,7 +45,7 @@ resolve_domain() {
 scan_open_ports() {
     local base_path="$1"
     local domain="$2"
-    local resolved_dir="$base_path/$domain/resolved"
+    local resolved_dir="$base_path/$domain/$OUTPUT_DIR"
     local open_ports_dir="$base_path/$domain/open_ports"
     local massdns_output="$resolved_dir/massdns.txt"
 
@@ -62,59 +57,34 @@ scan_open_ports() {
         return
     fi
 
-    cut -d ' ' -f3 "$massdns_output" | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' \
-        | sort -u > "$open_ports_dir/ips.txt"
+    cut -d ' ' -f3 "$massdns_output" | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | sort -u > "$open_ports_dir/ips.txt"
 
     if [ -s "$open_ports_dir/ips.txt" ]; then
         echo "[*] Scanning all ports for IPs in $domain..."
         masscan -p1-65535 -iL "$open_ports_dir/ips.txt" --rate=1000 -oG "$open_ports_dir/masscan.grep"
-        awk '/^Host: / { ip=$2; split($4, portinfo, "/"); print ip ":" portinfo[1] }' \
-            "$open_ports_dir/masscan.grep" | sort -u > "$open_ports_dir/open_ports.txt"
+
+        awk '/^Host: / { ip=$2; split($4, portinfo, "/"); print ip ":" portinfo[1] }' "$open_ports_dir/masscan.grep" | sort -u > "$open_ports_dir/open_ports.txt"
+
         echo "[✓] Ports scanned for $domain — results in $open_ports_dir/open_ports.txt"
     else
         echo "[!] No valid IPs found to scan for $domain"
     fi
 }
 
-# ---------------------- INPUT HANDLING -----------------------
-
-DOMAINS=()
-
-if [ "$INPUT" = "default" ]; then
+# Main Execution
+if [ $# -eq 0 ]; then
     echo "[*] No input provided — scanning all folders under $BASE_PATH"
     for d in "$BASE_PATH"/*; do
         [ -d "$d" ] || continue
         folder=$(basename "$d")
-        DOMAINS+=("$folder")
+        resolve_domain "$BASE_PATH" "$folder"
+        scan_open_ports "$BASE_PATH" "$folder"
     done
-elif [ -d "$INPUT" ]; then
-    echo "[*] Input is a folder — scanning all folders inside $INPUT"
-    for d in "$INPUT"/*; do
-        [ -d "$d" ] || continue
-        folder=$(basename "$d")
-        DOMAINS+=("$folder")
-    done
-elif [ -f "$INPUT" ]; then
-    echo "[*] Input is a file — reading domains from file: $INPUT"
-    mapfile -t DOMAINS < "$INPUT"
 else
-    echo "[*] Single domain provided: $INPUT"
-    DOMAINS=("$INPUT")
+    for domain in "$@"; do
+        resolve_domain "$BASE_PATH" "$domain"
+        scan_open_ports "$BASE_PATH" "$domain"
+    done
 fi
-
-# ---------------------- PROCESSING -----------------------
-
-for domain in "${DOMAINS[@]}"; do
-    if [ "$INPUT" = "default" ] || [ -d "$INPUT" ]; then
-        resolve_domain "$BASE_PATH" "$domain"
-        scan_open_ports "$BASE_PATH" "$domain"
-    elif [ -f "$INPUT" ]; then
-        resolve_domain "." "$domain"
-        scan_open_ports "." "$domain"
-    else
-        resolve_domain "$BASE_PATH" "$domain"
-        scan_open_ports "$BASE_PATH" "$domain"
-    fi
-done
 
 echo "[✓] All domains processed successfully."
