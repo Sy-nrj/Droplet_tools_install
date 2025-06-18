@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Usage:
-# bash C_Resolve_Subdomains.sh [optional: single_domain | list.txt | output/subdomains/]
+# bash domain_resolve.sh [optional: single_domain | list.txt | output/subdomains/]
 
 set -euo pipefail
 
@@ -12,7 +12,7 @@ curl -s https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt 
 
 
 INPUT=${1:-"default"}
-BASE_DIR="output/subdomains"
+BASE_DIR="output"
 RESOLVERS="resolvers.txt"
 
 
