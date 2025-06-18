@@ -49,6 +49,11 @@ pipx install git+https://github.com/xnl-h4ck3r/waymore.git
 
 pipx install git+https://github.com/xnl-h4ck3r/xnLinkFinder.git
 
+# Paramspider
+git clone https://github.com/devanshbatham/paramspider
+cd paramspider
+pip install . && cd ..
+
 
 #  Masscan
 
