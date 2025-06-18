@@ -16,6 +16,8 @@ BASE_DIR="output/subdomains"
 RESOLVERS="resolvers.txt"
 
 
+echo $RESOLVERS
+
 
 # ---------------------- FUNCTIONS -----------------------
 
