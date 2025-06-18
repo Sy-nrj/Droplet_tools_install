@@ -12,7 +12,7 @@ ENDPOINT_TOOLS=("gospider" "gau" "waymore" "katana" "waybackurls")
 # Tools for asset enumeration
 JS_TOOLS=("xnlinkfinder" "jsluice" "jsrecon")
 JSON_FILES=("config.json" "firebase.json" "site.manifest" ".env")
-BACKUP_EXTENSIONS=("bak" "bck" "old" "backup")
+BACKUP_EXTENSIONS=("bak" "bck" "old" "backup", zip, sql, old, swp, orig, db)
 
 # Iterate over each domain
 for DOMAIN_DIR in $DOMAINS; do
