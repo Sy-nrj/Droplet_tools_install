@@ -42,7 +42,7 @@ ENUM_SUBDOMAINS() {
     # sublist3r -d "$domain" -o "$target_dir/sublist3r.txt"
     # gospider -s "http://$domain" -o "$TMP_DIR" 2>/dev/null
     # gau --subs "$domain" 2>/dev/null > "$target_dir/gau.txt"
-    curl -s "https://crt.sh/?q=%25.$domain&output=json" | jq -r '.[].name_value' > "$target_dir/curl.txt"
+    curl -s "https://crt.sh/?q=%25.$domain&output=json" | jq -r '.[].name_value' | sed 's/\*\.//' | sort -u > "$target_dir/curl.txt"
 
     # Aggregate unique subdomains
     cat "$target_dir"/*.txt | sed 's/^www\.//' | sort -u > "$target_dir/all_subs.txt"
