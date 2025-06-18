@@ -36,7 +36,7 @@ resolve_domain() {
     mkdir -p "$resolved_dir"
 
     # DNSX
-    dnsx -l "$subs_file" -silent -resolvers "$RESOLVERS" -o "$resolved_dir/dnsx_resolved.txt"
+    dnsx -l "$subs_file" -silent -r "$RESOLVERS" -o "$resolved_dir/dnsx_resolved.txt"
 
     # PureDNS
     puredns resolve "$subs_file" --resolvers "$RESOLVERS" --write "$resolved_dir/puredns_resolved.txt" --quiet
