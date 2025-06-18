@@ -12,7 +12,7 @@ go install github.com/projectdiscovery/dnsx/cmd/dnsx@latest
 go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest
 go install github.com/projectdiscovery/httpx/cmd/httpx@latest
 go install github.com/projectdiscovery/katana/cmd/katana@latest
-go install github.com/jaeles-project/gospider/cmd/gospider@latest
+GO111MODULE=on go install github.com/jaeles-project/gospider@latest
 go install github.com/defparam/paramspider@latest
 go install github.com/ffuf/ffuf/v2@latest
 go install github.com/lc/gau/v2/cmd/gau@latest
