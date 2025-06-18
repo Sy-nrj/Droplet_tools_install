@@ -1,9 +1,0 @@
-#! /bin/bash
-
-mkdir -p ./$DOMAIN/resolved
-
-# Using dnsx
-cat $OUTPUT_DIR/all_subs.txt | dnsx -o ./$DOMAIN/resolved/dnsx_resolved.txt
-
-# Using massdns
-massdns -r resolvers.txt -t A -o S -w ./$DOMAIN/resolved/massdns_resolved.txt $OUTPUT_DIR/all_subs.txt
