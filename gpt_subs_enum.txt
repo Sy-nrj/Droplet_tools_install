@@ -36,9 +36,16 @@ ENUM_SUBDOMAINS() {
     echo "[*] Enumerating subdomains for: $domain"
 
     # Run tools and save outputs
+    echo "[*] Enumerating with subfinder"
     subfinder -d "$domain" -silent > "$target_dir/subfinder.txt"
+
+    echo "[*] Enumerating with assetfinder"
     assetfinder --subs-only "$domain" > "$target_dir/assetfinder.txt"
+
+    echo "[*] Enumerating with amass"
     amass enum -passive -d "$domain" -o "$target_dir/amass.txt"
+
+    # echo "[*] Enumerating with sublist3r"
     # sublist3r -d "$domain" -o "$target_dir/sublist3r.txt"
     # gospider -s "http://$domain" -o "$TMP_DIR" 2>/dev/null
     # gau --subs "$domain" 2>/dev/null > "$target_dir/gau.txt"
@@ -46,6 +53,7 @@ ENUM_SUBDOMAINS() {
 
     # Aggregate unique subdomains
     cat "$target_dir"/*.txt | sed 's/^www\.//' | sort -u > "$target_dir/all_subs.txt"
+    echo "[*] Enumeration terminated for $domain"
 }
 
 for target in $TARGETS; do
