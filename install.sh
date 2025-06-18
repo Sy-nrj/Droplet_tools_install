@@ -12,7 +12,6 @@ go install github.com/projectdiscovery/dnsx/cmd/dnsx@latest
 go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest
 go install github.com/projectdiscovery/httpx/cmd/httpx@latest
 go install github.com/projectdiscovery/katana/cmd/katana@latest
-GO111MODULE=on go install github.com/jaeles-project/gospider@latest
 go install github.com/defparam/paramspider@latest
 go install github.com/ffuf/ffuf/v2@latest
 go install github.com/lc/gau/v2/cmd/gau@latest
@@ -36,6 +35,9 @@ sudo gem install nokogiri
 chmod u+x ./cewl.rb
 sudo apt install cewl
 
+
+# Go_spider
+sudo GO111MODULE=on go install github.com/jaeles-project/gospider@latest
 
 sudo snap install seclists -y
 sudo apt install sublist3r -y
