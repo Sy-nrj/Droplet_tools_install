@@ -8,7 +8,7 @@ set -euo pipefail
 
 # Get fresh resolvers
 echo "[*] Downloading best DNS resolvers..."
-curl -s https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -o "$RESOLVERS"
+curl -s https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -o resolvers.txt
 
 
 INPUT=${1:-"default"}
