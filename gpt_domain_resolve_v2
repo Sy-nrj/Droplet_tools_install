@@ -39,7 +39,7 @@ resolve_domain() {
     dnsx -l "$subs_file" -silent -r "$RESOLVERS" -o "$resolved_dir/dnsx_resolved.txt"
 
     # PureDNS
-    puredns resolve "$subs_file" --resolvers "$RESOLVERS" --write "$resolved_dir/puredns_resolved.txt" --quiet
+    puredns resolve "$subs_file" -r "$RESOLVERS" --write "$resolved_dir/puredns_resolved.txt" --quiet
 
     # MassDNS
     massdns -r "$RESOLVERS" -t A -o S -w "$resolved_dir/massdns.txt" "$subs_file"
