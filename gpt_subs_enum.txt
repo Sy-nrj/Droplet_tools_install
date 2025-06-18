@@ -39,7 +39,7 @@ ENUM_SUBDOMAINS() {
     subfinder -d "$domain" -silent > "$target_dir/subfinder.txt"
     assetfinder --subs-only "$domain" > "$target_dir/assetfinder.txt"
     amass enum -passive -d "$domain" -o "$target_dir/amass.txt"
-    sublist3r -d "$domain" -o "$target_dir/sublist3r.txt"
+    # sublist3r -d "$domain" -o "$target_dir/sublist3r.txt"
     gospider -s "http://$domain" -o "$TMP_DIR" 2>/dev/null
     gau --subs "$domain" 2>/dev/null > "$target_dir/gau.txt"
     curl -s "https://crt.sh/?q=%25.$domain&output=json" | jq -r '.[].name_value' > "$target_dir/curl.txt"
