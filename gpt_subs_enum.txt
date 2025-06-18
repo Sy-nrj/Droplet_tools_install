@@ -6,7 +6,7 @@
 
 set -e
 
-OUTPUT_DIR="output/subdomains"
+OUTPUT_DIR="output"
 TMP_DIR="output/tmp"
 
 mkdir -p "$OUTPUT_DIR" "$TMP_DIR"
